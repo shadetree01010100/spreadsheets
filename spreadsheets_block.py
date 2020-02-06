@@ -1,8 +1,8 @@
-from nio.block.base import Block
+from nio import Block
 from nio.properties import VersionProperty
 
 
-class Example(Block):
+class Spreadsheets(Block):
 
     version = VersionProperty('0.1.0')
 
