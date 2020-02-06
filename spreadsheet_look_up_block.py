@@ -1,8 +1,9 @@
 import xlrd
 
 from nio import Block, Signal
-from nio.properties import FileProperty, ListProperty, PropertyHolder, \
-    StringProperty, VersionProperty
+from nio.block.mixins import EnrichSignals
+from nio.properties import ListProperty, PropertyHolder, StringProperty, \
+    VersionProperty
 
 
 class Match(PropertyHolder):
@@ -17,9 +18,9 @@ class OutputStructure(PropertyHolder):
     value = StringProperty(title='Value', order=1)
 
 
-class SpreadsheetLookUp(Block):
+class SpreadsheetLookUp(EnrichSignals, Block):
 
-    source = FileProperty(title='Source File', order=0)
+    source = StringProperty(title='Source File', order=0)
     match = ListProperty(
         Match,
         title='Match',
@@ -33,7 +34,7 @@ class SpreadsheetLookUp(Block):
 
     def start(self):
         self.map = {}
-        rows = self._read_xlsx(xlrd.open_workbook(self.source().file))
+        rows = self._read_xlsx(xlrd.open_workbook(self.source()))
         for row in rows:
             value = {}
             for item in self.output_structure():
@@ -45,10 +46,10 @@ class SpreadsheetLookUp(Block):
         super().start()
 
     def process_signal(self, signal):
-        dic = self.map
+        signal_dict = self.map
         for match in self.match():
-            dic = dic[match.key(signal)]
-        return Signal(dic)
+            signal_dict = signal_dict[match.key(signal)]
+        return self.get_output_signal(signal_dict, signal)
 
     @staticmethod
     def nested_set(dic, keys, value):
